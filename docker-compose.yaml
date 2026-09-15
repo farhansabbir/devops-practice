@@ -1,0 +1,32 @@
+services:
+  mongodb:
+    image: mongo:7
+    volumes:
+      - ./db:/data/db
+    networks:
+      - backend-net
+
+  backend:
+    build: ./backend
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_DB=app
+    depends_on:
+      - mongodb
+    networks:
+      - backend-net
+      - frontend-net
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    networks:
+      - frontend-net
+
+networks:
+  backend-net:
+    internal: true
+  frontend-net:
