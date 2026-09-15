@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ostad 3 tier app</title>
+</head>
+<body>
+    <form id="fetch-form">
+        <input type="submit" value="Fetch">
+    </form>
+    <div id="data"></div>
+
+    <script>
+        document.getElementById('fetch-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const response = await fetch('/api');
+            const data = await response.text();
+            document.getElementById('data').textContent = data;
+        });
+    </script>
+</body>
+</html>
