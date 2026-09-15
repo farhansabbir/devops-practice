@@ -7,14 +7,14 @@
     <form id="fetch-form">
         <input type="submit" value="Fetch">
     </form>
-    <div id="data"></div>
+    <pre id="data"></pre>
 
     <script>
         document.getElementById('fetch-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const response = await fetch('/api');
-            const data = await response.text();
-            document.getElementById('data').textContent = data;
+            const data = await response.json();
+            document.getElementById('data').textContent = JSON.stringify(data, null, 2);
         });
     </script>
 </body>
