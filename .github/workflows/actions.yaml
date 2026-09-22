@@ -1,0 +1,24 @@
+name: Test actions
+
+on:
+    push:
+         branches:
+           - assignment5
+
+jobs:
+    build:
+        name: Build Binaries
+        runs-on: ostad-runner
+        outputs:
+            tag: ${{ steps.set_tag.outputs.TAG }}
+            error_hint: ${{ steps.error_capture.outputs.hint }}
+        strategy:
+            matrix:
+                platform: [amd64, arm64]
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v5
+              with:
+                  fetch-depth: 0
+                  fetch-tags: true
+
