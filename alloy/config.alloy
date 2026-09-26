@@ -21,20 +21,38 @@ loki.source.journal "journal" {
   max_age       = "12h"
   relabel_rules = loki.relabel.journal.rules
   labels        = { job = "systemd-journal", host = "jumphost" }
-  forward_to    = [loki.write.local.receiver]
+  forward_to    = [loki.process.filter.receiver]
 }
 
-// ---- plain log files under /var/log (dpkg, apt, ...)
+// ufw's "high" logging level writes an [UFW AUDIT] kernel line for every
+// allowed packet - including Loki's own loopback traffic, which would feed
+// back into Loki. Drop those; [UFW BLOCK] and [UFW ALLOW] lines are kept.
+loki.process "filter" {
+  stage.drop {
+    expression          = ".*\\[UFW AUDIT\\].*"
+    drop_counter_reason = "ufw_audit"
+  }
+  forward_to = [loki.write.local.receiver]
+}
+
+// ---- plain log files under /var/log that are not in the journal (dpkg, apt, ...).
+// rsyslog's copies of the journal (auth, cron, kern, ufw, ...) are excluded:
+// the journal source above already has every one of those lines.
 local.file_match "varlog" {
   path_targets = [
-    { __path__ = "/var/log/*.log", job = "varlogs", host = "jumphost" },
+    {
+      __path__         = "/var/log/*.log",
+      __path_exclude__ = "/var/log/{auth,cron,daemon,debug,kern,mail,messages,syslog,ufw,user}.log",
+      job              = "varlogs",
+      host             = "jumphost",
+    },
     { __path__ = "/var/log/apt/*.log", job = "varlogs", host = "jumphost" },
   ]
 }
 
 loki.source.file "varlog" {
   targets    = local.file_match.varlog.targets
-  forward_to = [loki.write.local.receiver]
+  forward_to = [loki.process.filter.receiver]
 }
 
 // ---- Loki on the same machine
