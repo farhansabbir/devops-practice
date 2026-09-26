@@ -1,0 +1,32 @@
+# Prometheus configuration for the jumphost.
+# Installed to /etc/prometheus/prometheus.yml by scripts/install-prometheus.sh.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    host: jumphost
+
+scrape_configs:
+  # Prometheus itself.
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Node Exporter: CPU, memory, disk and network metrics of this machine.
+  - job_name: node
+    static_configs:
+      - targets: ["localhost:9100"]
+
+  # The rest of the stack exposes its own metrics too.
+  - job_name: grafana
+    static_configs:
+      - targets: ["localhost:3000"]
+
+  - job_name: loki
+    static_configs:
+      - targets: ["127.0.0.1:3100"]
+
+  - job_name: alloy
+    static_configs:
+      - targets: ["127.0.0.1:12345"]
