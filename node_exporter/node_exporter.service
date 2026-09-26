@@ -1,0 +1,23 @@
+[Unit]
+Description=Prometheus Node Exporter
+Documentation=https://github.com/prometheus/node_exporter
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=node_exporter
+Group=node_exporter
+# Default collectors cover what the dashboard needs: cpu, meminfo, filesystem,
+# diskstats, netdev, loadavg, time. Metrics are served on :9100/metrics.
+ExecStart=/usr/local/bin/node_exporter \
+    --web.listen-address=:9100
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
