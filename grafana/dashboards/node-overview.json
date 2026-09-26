@@ -310,6 +310,7 @@
         "defaults": {
           "unit": "percent",
           "min": 0,
+          "max": 100,
           "custom": {
             "drawStyle": "line",
             "lineWidth": 1,
@@ -765,7 +766,7 @@
     {
       "id": 11,
       "type": "timeseries",
-      "title": "Log Lines per Unit (Loki)",
+      "title": "Log Volume by Level (Loki)",
       "datasource": {
         "type": "loki",
         "uid": "loki"
@@ -783,8 +784,8 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum by (unit) (count_over_time({job=\"systemd-journal\"}[$__auto]))",
-          "legendFormat": "{{unit}}"
+          "expr": "sum by (level) (count_over_time({job=\"systemd-journal\"}[$__auto]))",
+          "legendFormat": "{{level}}"
         }
       ],
       "fieldConfig": {
