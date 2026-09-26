@@ -1,0 +1,45 @@
+// Grafana Alloy: ships this machine's logs to Loki.
+// Installed to /etc/alloy/config.alloy by scripts/install-loki.sh.
+// (Alloy replaces Promtail, which reached end of life in 2026.)
+
+// ---- systemd journal: every service's log, with its unit and level as labels
+loki.relabel "journal" {
+  forward_to = []
+
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label  = "unit"
+  }
+
+  rule {
+    source_labels = ["__journal_priority_keyword"]
+    target_label  = "level"
+  }
+}
+
+loki.source.journal "journal" {
+  max_age       = "12h"
+  relabel_rules = loki.relabel.journal.rules
+  labels        = { job = "systemd-journal", host = "jumphost" }
+  forward_to    = [loki.write.local.receiver]
+}
+
+// ---- plain log files under /var/log (dpkg, apt, ...)
+local.file_match "varlog" {
+  path_targets = [
+    { __path__ = "/var/log/*.log", job = "varlogs", host = "jumphost" },
+    { __path__ = "/var/log/apt/*.log", job = "varlogs", host = "jumphost" },
+  ]
+}
+
+loki.source.file "varlog" {
+  targets    = local.file_match.varlog.targets
+  forward_to = [loki.write.local.receiver]
+}
+
+// ---- Loki on the same machine
+loki.write "local" {
+  endpoint {
+    url = "http://127.0.0.1:3100/loki/api/v1/push"
+  }
+}
