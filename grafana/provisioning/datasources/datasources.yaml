@@ -1,0 +1,24 @@
+# Grafana datasources, provisioned at startup.
+# Installed to /etc/grafana/provisioning/datasources/ by scripts/install-grafana.sh.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 15s
+
+  # Loki listens on 127.0.0.1 only; "localhost" could resolve to ::1 first.
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://127.0.0.1:3100
+    editable: false
+    jsonData:
+      maxLines: 1000
