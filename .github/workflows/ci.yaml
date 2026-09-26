@@ -1,0 +1,64 @@
+name: CI
+
+# Runs on the self-hosted runner on the jumphost. Only pushes to this branch and
+# manual runs trigger it: the repository is public, and a pull_request trigger
+# would let code from a fork run on that machine.
+on:
+  push:
+    branches:
+      - assignment6
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Build, test and upload artifact
+    runs-on: [self-hosted, linux, x64]
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: app/go.mod
+          cache: false # standard library only, nothing to cache
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: |
+          go vet ./...
+          go test -v -coverprofile=coverage.out ./...
+          go tool cover -func=coverage.out
+
+      - name: Generate artifact
+        env:
+          VERSION: ${{ github.sha }}
+        run: |
+          mkdir -p dist
+          for arch in amd64 arm64; do
+            CGO_ENABLED=0 GOOS=linux GOARCH="$arch" go build -trimpath \
+              -ldflags "-s -w -X main.version=${VERSION}" -o "dist/hello-linux-${arch}" .
+          done
+          cp coverage.out dist/
+          (cd dist && sha256sum hello-linux-* > SHA256SUMS)
+          ls -l dist
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: hello-${{ github.sha }}
+          path: app/dist/
+          if-no-files-found: error
+          retention-days: 14
