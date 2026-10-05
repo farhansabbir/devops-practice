@@ -1,0 +1,8 @@
+name: CloudNest CI
+on: [push]
+jobs:
+  build-and-test:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Executing build on local infrastructure"
