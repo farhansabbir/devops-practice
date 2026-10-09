@@ -1,2 +1,0 @@
-ollama pull llama3.1:8b
-ollama pull qwen2.5-coder:7b
