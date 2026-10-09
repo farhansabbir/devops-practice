@@ -1,32 +1,48 @@
 services:
-  mongodb:
-    image: mongo:7
-    volumes:
-      - ./db:/data/db
+  nginx-a:
+    image: nginx:alpine
+    container_name: nginx-a
     networks:
-      - backend-net
+      - az-a
+    command: >
+      /bin/sh -c 'echo "Container Hostname: $${HOSTNAME}" > /usr/share/nginx/html/index.html && nginx -g "daemon off;"'
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
-  backend:
-    build: ./backend
-    environment:
-      - MONGO_URI=mongodb://mongodb:27017
-      - MONGO_DB=app
-    depends_on:
-      - mongodb
+  nginx-b:
+    image: nginx:alpine
+    container_name: nginx-b
     networks:
-      - backend-net
-      - frontend-net
+      - az-b
+    command: >
+      /bin/sh -c 'echo "Container Hostname: $${HOSTNAME}" > /usr/share/nginx/html/index.html && nginx -g "daemon off;"'
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
-  frontend:
-    build: ./frontend
-    depends_on:
-      - backend
+  nginx-lb:
+    image: nginx:alpine
+    container_name: nginx-lb
     ports:
-      - "3000:3000"
+      - "8080:80"
+    volumes:
+      - ./lb/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
-      - frontend-net
+      - az-a
+      - az-b
+    depends_on:
+      nginx-a:
+        condition: service_healthy
+      nginx-b:
+        condition: service_healthy
 
 networks:
-  backend-net:
-    internal: true
-  frontend-net:
+  az-a:
+    driver: bridge
+  az-b:
+    driver: bridge
